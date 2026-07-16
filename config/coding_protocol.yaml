@@ -1,0 +1,87 @@
+# Machine-readable Study 1 coding protocol, from Appendix B (app:protocols)
+# of the paper.
+# src/coding/protocol.py implements these rules; tests/test_protocol.py
+# exercises every branch (T2).
+
+inclusion_criteria:
+  - id: autonomous_multistep
+    rule: >-
+      System exhibits autonomous multi-step behavior: planning plus tool
+      execution, not single-completion model output.
+  - id: mechanism_detail
+    rule: >-
+      Failure is described with enough mechanism-level detail to code a
+      layer.
+  - id: reporting_quality
+    rule: >-
+      Account is independently reported, or self-reported with technical
+      specifics.
+
+exclusion_reasons:
+  - not_agentic            # single-completion output, no planning/tool loop
+  - insufficient_mechanism # cannot determine how the failure unfolded
+  - unverified_account     # speculative or undocumented
+  - duplicate              # same (system, date) already included
+
+# Scope rules set by author adjudication (2026-07-16), applied corpus-wide:
+scope_rules:
+  - id: no_physical_robotic_autonomy
+    rule: >-
+      Physical robotic autonomy (autonomous vehicles, delivery robots) is
+      outside scope: the study covers agentic AI in the paper's Sec. 1
+      sense (systems that plan, reason, and invoke software tools over
+      multi-step workflows). Code such candidates not_agentic.
+  - id: no_benchmark_studies
+    rule: >-
+      Controlled benchmark or simulation studies of hypothetical attacks
+      are not documented incidents (code unverified_account/not_agentic as
+      appropriate). Demonstrated exploits against production systems with
+      mechanism-level detail remain admissible.
+
+deduplication:
+  key: [system, date]
+  scope: across_all_sources
+
+# Primary code = the EARLIEST layer whose correct functioning would have
+# interrupted the failure trajectory. Rules are evaluated in this order.
+primary_code_rules:
+  - layer: L1
+    rule: >-
+      A correctly designed single-agent closed loop (observer, budget caps,
+      iteration limits, circuit breaker, least-privilege tools) would have
+      prevented the failure.
+  - layer: L2
+    rule: >-
+      The mechanism required inter-agent interaction or shared state:
+      cascades, shared-memory contamination, feedback loops between agents.
+  - layer: L3
+    rule: >-
+      A human oversight point existed but lacked capacity, an interpretable
+      model, or authority to act.
+  - layer: L4
+    rule: >-
+      The mechanism was operational: no rollback path, silent model swap,
+      missing telemetry, unbounded cost, deployment gap.
+
+secondary_codes:
+  record: true
+  rule: All other contributing layers are recorded as secondary codes.
+
+dual_coding:
+  pass_a:
+    coder: llm_precoder
+    description: >-
+      Model API with structured JSON output (json_schema): primary,
+      secondaries, one-sentence rationale, and confidence.
+  pass_b:
+    coder: llm_second_pass
+    description: >-
+      Independent pass with a differently-worded prompt of the same
+      protocol.
+  reliability_statistic: cohens_kappa_on_primary_codes_before_adjudication
+  adjudication:
+    method: human_review_of_all_disagreements
+    artifact: notebooks/adjudication_review.ipynb
+    rationale_required: true
+  # Honesty requirement (guide sec 3.4): Appendix B in main.tex must be
+  # updated at T5 to state exactly the configuration actually run.

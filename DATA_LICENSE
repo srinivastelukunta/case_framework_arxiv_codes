@@ -1,0 +1,16 @@
+Datasets in data/ created by this project (study1_incidents.csv,
+study2_tools.csv, study3_deployments.csv, citation_ledger.csv) are licensed
+under the Creative Commons Attribution 4.0 International License (CC BY 4.0).
+
+You should have received a copy of the license along with this work. If not,
+see <https://creativecommons.org/licenses/by/4.0/legalcode>.
+
+Attribution: Telukunta, S. (2026). CASE Framework evidence datasets.
+
+Upstream sources retain their own licenses and terms; data/citation_ledger.csv
+records the license/terms note for every upstream evidence item. Raw cached
+fetches under data/raw/ are working copies of third-party public material and
+are NOT covered by this license.
+
+NOTE (T10): replace this notice with the full CC BY 4.0 legal code text
+before public release.

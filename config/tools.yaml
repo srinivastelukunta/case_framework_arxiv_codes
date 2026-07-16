@@ -1,0 +1,219 @@
+# Study 2 tool registry: the agent-ops tooling ecosystem coded against the
+# CASE mechanism classes (config/mechanism_classes.yaml). Enumerated
+# 2026-07-16 via three research passes (observability/eval, guardrails/
+# gateway, orchestration/HITL) with fetchable-doc verification.
+#
+# Status lifecycle: proposed | approved | rejected (author approval gate).
+# layers_hint is the research pass's ROUGH read of which layers each tool's
+# docs plausibly touch — NOT the coding; the Full/Partial/None coder decides
+# from the doc text against the mechanism classes.
+#
+# The paper hypothesizes DENSE L1 (control/guardrails) and L4 (eval/ops)
+# coverage, SPARSE L2 (interaction-graph/cascade monitoring) and L3 (human
+# oversight). The registry is chosen to test that fairly: it spans pure
+# guardrails, gateways, observability/eval platforms, multi-agent runtimes,
+# and dedicated human-in-the-loop tools.
+
+defaults:
+  # Coding reads the doc pages below (robots-aware, cached). Where a tool's
+  # L1/L3 features live on a deeper guardrails/admin page than its overview
+  # (a systematic pattern the research flagged), a second URL is included.
+  min_seconds_between_requests: 2
+  cache_subdir: tool_docs
+
+tools:
+  # --- Observability / evaluation platforms (L4-dense; L3 via annotation) ---
+  - id: langsmith
+    name: LangSmith
+    vendor: LangChain
+    category: observability_eval
+    doc_urls: [https://docs.langchain.com/langsmith]
+    layers_hint: [L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: langfuse
+    name: Langfuse
+    vendor: Langfuse (OSS)
+    category: observability_eval
+    doc_urls: [https://langfuse.com/docs]
+    layers_hint: [L2, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: arize_phoenix
+    name: Arize Phoenix
+    vendor: Arize AI (OSS)
+    category: observability_eval
+    doc_urls: [https://arize.com/docs/phoenix]
+    layers_hint: [L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: braintrust
+    name: Braintrust
+    vendor: Braintrust
+    category: observability_eval
+    doc_urls: [https://www.braintrust.dev/docs]
+    layers_hint: [L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: datadog_llm_obs
+    name: Datadog LLM Observability
+    vendor: Datadog
+    category: observability_eval
+    doc_urls: [https://docs.datadoghq.com/llm_observability/]
+    layers_hint: [L1, L4]
+    status: approved  # author approved 2026-07-16
+  - id: honeyhive
+    name: HoneyHive
+    vendor: HoneyHive
+    category: observability_eval
+    doc_urls: [https://docs.honeyhive.ai/introduction]
+    layers_hint: [L2, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: agentops
+    name: AgentOps
+    vendor: AgentOps
+    category: observability_eval
+    doc_urls: [https://docs.agentops.ai/v2/introduction]
+    layers_hint: [L2, L4]
+    status: approved  # author approved 2026-07-16
+  - id: fiddler
+    name: Fiddler AI
+    vendor: Fiddler
+    category: observability_eval
+    doc_urls: [https://docs.fiddler.ai/]
+    layers_hint: [L1, L2, L4]
+    status: approved  # author approved 2026-07-16
+  - id: orq_ai
+    name: Orq.ai
+    vendor: Orq.ai
+    category: observability_eval
+    doc_urls: [https://orq.ai/platform/agent-runtime, https://docs.orq.ai/changelog/human-in-the-loop]
+    layers_hint: [L1, L2, L3, L4]
+    status: approved  # author approved 2026-07-16
+
+  # --- Guardrails / gateways (L1-dense; L4 via gateway ops) ---
+  - id: guardrails_ai
+    name: Guardrails AI
+    vendor: Guardrails AI (OSS)
+    category: guardrails_gateway
+    doc_urls: [https://www.guardrailsai.com/docs]
+    layers_hint: [L1, L4]
+    status: approved  # author approved 2026-07-16
+  - id: nemo_guardrails
+    name: NVIDIA NeMo Guardrails
+    vendor: NVIDIA (OSS)
+    category: guardrails_gateway
+    doc_urls: [https://docs.nvidia.com/nemo/guardrails/home]
+    layers_hint: [L1, L4]
+    status: approved  # author approved 2026-07-16
+  - id: lakera_guard
+    name: Lakera Guard
+    vendor: Lakera
+    category: guardrails_gateway
+    doc_urls: [https://docs.lakera.ai/]
+    layers_hint: [L1, L2, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: portkey
+    name: Portkey
+    vendor: Portkey
+    category: guardrails_gateway
+    doc_urls: [https://portkey.ai/docs/introduction/what-is-portkey]
+    layers_hint: [L1, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: litellm
+    name: LiteLLM
+    vendor: BerriAI (OSS)
+    category: guardrails_gateway
+    doc_urls: [https://docs.litellm.ai/]
+    layers_hint: [L1, L4]
+    status: approved  # author approved 2026-07-16
+  - id: invariant_labs
+    name: Invariant Labs (Guardrails/Explorer)
+    vendor: Invariant Labs (Snyk, OSS)
+    category: guardrails_gateway
+    # Strongest L2 signal in the field: multi-step tool-flow / agent-interaction
+    # dataflow monitoring + MCP-scan. Key test case for the L2-sparse hypothesis.
+    doc_urls: [https://github.com/invariantlabs-ai/invariant, https://invariantlabs.ai/guardrails]
+    layers_hint: [L1, L2, L3]
+    status: approved  # author approved 2026-07-16
+
+  # --- Orchestration / runtime + human-in-the-loop (L2/L3 candidates) ---
+  - id: langgraph
+    name: LangGraph
+    vendor: LangChain
+    category: orchestration_hitl
+    doc_urls: [https://docs.langchain.com/oss/python/langgraph/interrupts, https://docs.langchain.com/oss/python/langchain/guardrails]
+    layers_hint: [L1, L2, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: crewai
+    name: CrewAI
+    vendor: CrewAI
+    category: orchestration_hitl
+    doc_urls: [https://docs.crewai.com/en/introduction, https://docs.crewai.com/en/learn/human-input-on-execution]
+    layers_hint: [L2, L3]
+    status: approved  # author approved 2026-07-16
+  - id: autogen
+    name: Microsoft AutoGen
+    vendor: Microsoft (OSS)
+    category: orchestration_hitl
+    doc_urls: [https://microsoft.github.io/autogen/stable/index.html]
+    layers_hint: [L2, L3]
+    status: approved  # author approved 2026-07-16
+  - id: temporal
+    name: Temporal (durable execution for agents)
+    vendor: Temporal Technologies
+    category: orchestration_hitl
+    doc_urls: [https://temporal.io/solutions/ai, https://docs.temporal.io/ai-cookbook]
+    layers_hint: [L1, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: openai_agents_sdk
+    name: OpenAI Agents SDK
+    vendor: OpenAI (OSS)
+    category: orchestration_hitl
+    doc_urls: [https://openai.github.io/openai-agents-python/human_in_the_loop/]
+    layers_hint: [L1, L3, L4]
+    status: approved  # author approved 2026-07-16
+  - id: humanlayer
+    name: HumanLayer
+    vendor: HumanLayer
+    category: orchestration_hitl
+    # L3 pure-play: require_approval() gating, escalation routing, audit logs.
+    # Key test case for the L3-sparse-but-present hypothesis.
+    doc_urls: [https://www.humanlayer.dev/, https://pypi.org/project/humanlayer/]
+    layers_hint: [L3]
+    status: approved  # author approved 2026-07-16
+  - id: azure_ai_foundry_agents
+    name: Azure AI Foundry Agent Service
+    vendor: Microsoft
+    category: orchestration_hitl
+    doc_urls: [https://learn.microsoft.com/en-us/azure/ai-foundry/agents/overview]
+    layers_hint: [L1, L2, L4]
+    status: approved  # author approved 2026-07-16
+
+# Rejected candidates (logged with reasons per the study protocol — excluded
+# for cause, not for capacity). These do NOT enter coding.
+rejected:
+  - id: wandb_weave
+    name: Weights & Biases Weave
+    reason: >-
+      Documentation host (weave-docs.wandb.ai) returns HTTP 403 to automated
+      fetchers (Cloudflare bot protection) on every doc URL; cannot be coded
+      reproducibly from machine-fetched documentation.
+  - id: robust_intelligence
+    name: Robust Intelligence AI Firewall
+    reason: >-
+      Own docs host is DNS-dead (ENOTFOUND) and the product site refuses
+      connections; the standalone product was folded into Cisco AI Defense
+      after acquisition. No stable first-party documentation to code.
+  - id: bedrock_agents_classic
+    name: Amazon Bedrock Agents (classic)
+    reason: >-
+      AWS documentation states classic Bedrock Agents enters maintenance mode
+      and closes to new customers 2026-07-30; superseded by Bedrock AgentCore.
+      Excluded to keep the registry to current, generally-available tooling.
+  - id: meta_llama_guard
+    name: Meta Llama Guard
+    reason: >-
+      The Meta developer documentation page returns only a JS shell (no
+      extractable capability text) to the fetcher; cannot verify or code.
+
+# Alternates considered but not sampled (capacity, not cause) — available if
+# the author wants to widen or swap: Helicone, Traceloop/OpenLLMetry,
+# PromptLayer, Galileo, Opik (Comet), Langtrace, Vellum, Protect AI,
+# Prompt Security, Aporia, Cloudflare AI Gateway.

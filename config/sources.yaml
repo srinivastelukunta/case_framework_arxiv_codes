@@ -1,0 +1,388 @@
+# Source registry and fetch policy for all collectors.
+# Compliance rules (guide sec 6): public sources only, respect robots.txt
+# and terms of use, no paywalled scraping, rate-limit every fetcher.
+
+defaults:
+  min_seconds_between_requests: 2   # per domain
+  respect_robots_txt: true
+  user_agent: >-
+    case-framework-evidence/0.1 (research pipeline for the CASE Framework
+    paper; contact: st245@cornell.edu)
+  cache_dir: data/raw
+  timeout_seconds: 30
+  max_retries: 3
+
+sources:
+  aiid:
+    name: AI Incident Database
+    kind: snapshot
+    base_url: https://incidentdatabase.ai
+    # Verified 2026-07-15: weekly public snapshots (JSON/MongoDB/CSV inside
+    # tar.bz2) listed at https://incidentdatabase.ai/research/snapshots/.
+    # Pinned to a specific snapshot for reproducibility.
+    snapshot_url: https://pub-72b2b2fc36ec423189843747af98f80e.r2.dev/backup-20260713110347.tar.bz2
+    snapshot_date: "2026-07-13"
+    incident_url_template: https://incidentdatabase.ai/cite/{incident_id}
+    notes: >-
+      Filter to incidents from 2023 onward mentioning agent-relevant terms.
+      Widened 2026-07-16 (author-approved pool expansion): the original six
+      terms reached only 49 of 1044 2023+ incidents; tuning against the
+      cached incidents.csv added the terms below (+107 candidates). Terms
+      are prefix-matched at word start, so 'agent' already covers
+      'agentic', 'autonomous' covers 'autonomous system', 'assistant'
+      covers 'coding/AI/virtual assistant', and 'chatbot' covers the
+      suggested 'chatbot action' (0 literal hits). 'jailbroken' is listed
+      separately because prefix matching does not derive it from
+      'jailbreak'. MIT / arXiv keep the narrow base list: both coded 0
+      includes out of 169 candidates in the v2 run, so widening them adds
+      coding cost with no expected yield.
+    filter_terms:
+      - agent
+      - autonomous
+      - tool use
+      - multi-step
+      - orchestration
+      - copilot action
+      # --- widened 2026-07-16 ---
+      - assistant
+      - copilot
+      - chatbot
+      - LLM-driven
+      - prompt injection
+      - jailbreak
+      - jailbroken
+      - automated system
+    min_date: "2023-01-01"
+    # Author-vetted targeted L2/L3 additions (2026-07-16): specific AIID
+    # incidents that the keyword screen misses but a manual rescan surfaced
+    # as genuine multi-agent-coupling (L2) or oversight-failure (L3) cases.
+    # These bypass only the term gate, never the date gate (see aiid.py).
+    force_include_ids:
+      - "1556"  # Grok decodes Morse prompt -> Bankrbot executes ~$200K transfer (L2, inter-agent)
+      - "1054"  # Anthropic: Claude orchestrating 100+ influence-op bots (L2, swarm)
+      - "1442"  # Kiro agent -> 13h AWS Cost Explorer outage; 2-person approval bypassed (L3)
+      - "591"   # Cigna PXDX auto-rejects claims; physician review a rubber-stamp (L3)
+    cache_subdir: aiid
+
+  mit_risk_repo:
+    name: MIT AI Risk Repository
+    kind: spreadsheet
+    base_url: https://airisk.mit.edu
+    # Verified 2026-07-15: public Google Sheet published for copying at
+    # airisk.mit.edu/risks ("copy the full database on Google Sheets").
+    # Data licensed CC BY 4.0 per airisk.mit.edu.
+    sheet_id: 15LeHcpeuZC9txkvcaMoh3sUhkMvdMMry69xxXL46DT0
+    export_url: https://docs.google.com/spreadsheets/d/15LeHcpeuZC9txkvcaMoh3sUhkMvdMMry69xxXL46DT0/export?format=xlsx
+    license_note: CC BY 4.0 (stated at airisk.mit.edu)
+    # This is an author-published explicit dataset download link, not
+    # crawled content; robots.txt enforcement applies to crawl-type
+    # fetchers, not to this single invited download.
+    explicit_dataset_link: true
+    notes: >-
+      Keeps the narrow base terms (not the widened AIID list): 0/160
+      MIT candidates were included in the v2 coding run — risk excerpts,
+      not incidents — so widening here is pure coding cost.
+    filter_terms:
+      - agent
+      - autonomous
+      - tool use
+      - multi-step
+      - orchestration
+      - copilot action
+    cache_subdir: mit_risk_repo
+
+  arxiv:
+    name: arXiv API
+    kind: api
+    base_url: http://export.arxiv.org/api/query
+    notes: >-
+      Harvest concrete documented incidents described WITHIN failure-mode
+      papers, not the papers themselves.
+    search_terms:
+      - LLM agent failure
+      - multi-agent failure
+      - agent safety incident
+      - prompt injection agent
+    # Narrow base terms, same rationale as mit_risk_repo (0/9 included in v2).
+    filter_terms:
+      - agent
+      - autonomous
+      - tool use
+      - multi-step
+      - orchestration
+      - copilot action
+    cache_subdir: arxiv
+
+  web_reports:
+    name: Curated postmortems and field studies
+    kind: curated_list
+    notes: >-
+      Hand-curated vendor postmortems, observability-provider field studies,
+      and engineering-blog incident writeups. Candidate additions are
+      proposed and the author approves. Status values: seed | proposed |
+      approved | rejected.
+    cache_subdir: web_reports
+    # aiid_overlap notes a known AIID incident covering the same event;
+    # incident-level dedup by (system, date) happens at coding time.
+    items:
+      - id: replit_db_deletion_2025
+        title: Replit AI agent deletes production database during code freeze
+        system: Replit Agent
+        date: "2025-07"
+        status: seed   # known seed example from the project guide
+        url: https://www.theregister.com/2025/07/21/replit_saastr_vibe_coding_incident/
+        aiid_overlap: "1152"
+      - id: project_vend_phase1_2025
+        title: "Anthropic Project Vend: Claude runs a small shop (phase 1)"
+        system: Anthropic Claudius
+        date: "2025-06"
+        status: approved  # author approved 2026-07-16
+        url: https://www.anthropic.com/research/project-vend-1
+      - id: project_vend_phase2_2025
+        title: "Anthropic Project Vend phase 2: manipulation and giveaways"
+        system: Anthropic Claudius
+        date: "2025-12"
+        status: approved  # author approved 2026-07-16
+        url: https://www.anthropic.com/research/project-vend-2
+      - id: cursor_support_bot_2025
+        title: Cursor AI support bot invents login policy, users cancel
+        system: Cursor support agent (Sam)
+        date: "2025-04"
+        status: approved  # author approved 2026-07-16
+        url: https://www.forbes.com/sites/rashishrivastava/2025/04/22/the-prompt-cursors-customer-support-bot-made-up-a-policy/
+        aiid_overlap: "1039"
+      - id: github_mcp_injection_2025
+        title: GitHub MCP prompt injection leaks private repository data
+        system: GitHub MCP + coding agent
+        date: "2025-05"
+        status: approved  # author approved 2026-07-16
+        url: https://invariantlabs.ai/blog/mcp-github-vulnerability
+      - id: echoleak_copilot_2025
+        title: EchoLeak zero-click prompt injection in Microsoft 365 Copilot
+          (CVE-2025-32711)
+        system: Microsoft 365 Copilot
+        date: "2025-06"
+        status: approved  # author approved 2026-07-16
+        # aim.security landing page is JS-rendered (no extractable text);
+        # using a technical news writeup of the same disclosure instead
+        url: https://www.bleepingcomputer.com/news/security/zero-click-ai-data-leak-flaw-uncovered-in-microsoft-365-copilot/
+      - id: salesloft_drift_2025
+        title: Salesloft Drift OAuth token theft compromises Salesforce
+          instances at 700+ organizations
+        system: Salesloft Drift agent integration
+        date: "2025-08"
+        status: approved  # author approved 2026-07-16
+        url: https://cloud.google.com/blog/topics/threat-intelligence/data-theft-salesforce-instances-via-salesloft-drift
+      - id: postmark_mcp_2025
+        title: Malicious postmark-mcp package exfiltrates email via agent
+          tool chain
+        system: postmark-mcp package
+        date: "2025-09"
+        status: approved  # author approved 2026-07-16
+        url: https://www.koi.ai/blog/postmark-mcp-npm-malicious-backdoor-email-theft
+      - id: owasp_agentic_incidents_2026
+        title: OWASP report on agentic AI security failures in production
+          (field study)
+        system: multiple (field study)
+        date: "2026-06"
+        status: approved  # author approved 2026-07-16
+        url: https://www.helpnetsecurity.com/2026/06/11/owasp-prompt-injection-ai-security-failures/
+
+      # ---------------------------------------------------------------
+      # Pool-expansion batch (author asked for +15; approved 2026-07-16).
+      # All 15 researched + source-verified this session (fetchable primary
+      # writeup, not a JS shell). aiid_overlap flags an AIID twin already in
+      # the pool; incident-level (system,date) dedup at coding time keeps one
+      # unit, preferring the richer curated primary source. First three are
+      # the author's explicitly named candidates.
+      # NOT added (already coded+included in v2 via their AIID rows): OpenAI
+      # Operator purchase (1028), GTG-1002 espionage (1263), Nx s1ngularity
+      # (1210). Chevrolet $1 Tahoe (622) is already reached by the widened
+      # AIID screen, so it is left to AIID rather than duplicated here.
+      - id: amazon_q_wiper_2025
+        title: Malicious wipe-command prompt injected into Amazon Q VS Code
+          extension release (v1.84.0)
+        system: Amazon Q Developer extension
+        date: "2025-07"
+        status: approved  # author approved 2026-07-16
+        url: https://www.bleepingcomputer.com/news/security/amazon-ai-coding-agent-hacked-to-inject-data-wiping-commands/
+        aiid_overlap: "1158"
+      - id: sakana_ai_scientist_2024
+        title: Sakana "AI Scientist" autonomous research agent modifies its
+          own experiment code to extend runtime; fork-bomb and storage blowup
+        system: Sakana AI Scientist
+        date: "2024-08"
+        status: approved  # author approved 2026-07-16
+        # self-modification / sandbox-escape behaviour — L2/L3 candidate.
+        # ArsTechnica serves a consent wall (no extractable text) and the
+        # bare title carried no screen term, so this points at Sakana's own
+        # report and the title now names the agent explicitly.
+        url: https://sakana.ai/ai-scientist/
+      - id: gemini_cli_file_deletion_2025
+        title: Google Gemini CLI misreads failed mkdir, destroys user files
+          via cascading move commands
+        system: Google Gemini CLI
+        date: "2025-07"
+        status: approved  # author approved 2026-07-16
+        url: https://winbuzzer.com/2025/07/26/googles-gemini-cli-deletes-user-files-confesses-catastrophic-failure-xcxwbn/
+        aiid_overlap: "1178"
+      - id: nyc_mycity_chatbot_2024
+        title: NYC MyCity government chatbot advised businesses to break the
+          law (steal tips, deny Section 8, fire whistleblowers)
+        system: NYC MyCity chatbot (Microsoft-powered)
+        date: "2024-03"
+        status: approved  # author approved 2026-07-16
+        url: https://themarkup.org/artificial-intelligence/2024/03/29/nycs-ai-chatbot-tells-businesses-to-break-the-law
+      - id: comet_prompt_injection_2025
+        title: Brave discloses indirect prompt injection in Perplexity Comet
+          browser agent enabling account/OTP exfiltration
+        system: Perplexity Comet
+        date: "2025-08"
+        status: approved  # author approved 2026-07-16
+        url: https://brave.com/blog/comet-prompt-injection/
+      - id: forcedleak_agentforce_2025
+        title: ForcedLeak indirect prompt injection chain exfiltrates CRM data
+          from Salesforce Agentforce (CVSS 9.4)
+        system: Salesforce Agentforce
+        date: "2025-09"
+        status: approved  # author approved 2026-07-16
+        url: https://noma.security/blog/forcedleak-agent-risks-exposed-in-salesforce-agentforce/
+      - id: camoleak_copilot_chat_2025
+        title: CamoLeak prompt injection exfiltrates private repo secrets via
+          GitHub Copilot Chat and the Camo image proxy (CVE-2025-59145)
+        system: GitHub Copilot Chat
+        date: "2025-10"
+        status: approved  # author approved 2026-07-16
+        url: https://www.legitsecurity.com/blog/camoleak-critical-github-copilot-vulnerability-leaks-private-source-code
+      - id: slack_ai_exfiltration_2024
+        title: Slack AI indirect prompt injection exfiltrates data from private
+          channels the attacker cannot access
+        system: Slack AI
+        date: "2024-08"
+        status: approved  # author approved 2026-07-16
+        url: https://www.promptarmor.com/resources/data-exfiltration-from-slack-ai-via-indirect-prompt-injection
+      - id: freysa_agent_transfer_2024
+        title: Freysa autonomous crypto agent manipulated into approving a
+          $47K transfer via forged function-call semantics
+        system: Freysa on-chain AI agent
+        date: "2024-11"
+        status: approved  # author approved 2026-07-16
+        url: https://www.theblock.co/post/328747/human-player-outwits-freysa-ai-agent-in-47000-crypto-challenge
+      - id: lenovo_lena_xss_2025
+        title: Single-prompt XSS in Lenovo's Lena support chatbot steals
+          session cookies and pivots to live-agent workstations
+        system: Lenovo Lena chatbot
+        date: "2025-08"
+        status: approved  # author approved 2026-07-16
+        url: https://cybernews.com/security/lenovo-chatbot-lena-plagued-by-critical-vulnerabilities/
+      - id: agentflayer_chatgpt_connectors_2025
+        title: AgentFlayer zero-click exploit abuses ChatGPT Connectors to
+          steal API keys from connected Google Drive
+        system: ChatGPT Connectors
+        date: "2025-08"
+        status: approved  # author approved 2026-07-16
+        url: https://labs.zenity.io/p/agentflayer-chatgpt-connectors-0click-attack-5b41
+      - id: rules_file_backdoor_2025
+        title: Rules File Backdoor - hidden-Unicode instructions in AI
+          assistant rules files make Copilot/Cursor inject malicious code
+        system: GitHub Copilot / Cursor (rules files)
+        date: "2025-03"
+        status: approved  # author approved 2026-07-16
+        url: https://www.pillar.security/blog/new-vulnerability-in-github-copilot-and-cursor-how-hackers-can-weaponize-code-agents
+      - id: copilot_studio_ssrf_2024
+        title: Copilot Studio SSRF (CVE-2024-38206) reaches Azure IMDS and
+          managed-identity tokens via HttpRequestAction
+        system: Microsoft Copilot Studio
+        date: "2024-08"
+        status: approved  # author approved 2026-07-16
+        url: https://www.tenable.com/blog/ssrfing-the-web-with-the-help-of-copilot-studio
+      - id: vanna_ai_rce_2024
+        title: Vanna.AI prompt injection to RCE (CVE-2024-5565) - LLM-written
+          Plotly code passed to exec() runs arbitrary Python
+        system: Vanna.AI text-to-SQL library
+        date: "2024-06"
+        status: approved  # author approved 2026-07-16
+        url: https://jfrog.com/blog/prompt-injection-attack-code-execution-in-vanna-ai-cve-2024-5565/
+      - id: google_antigravity_exfil_2025
+        title: Google Antigravity agentic IDE - indirect prompt injection
+          shells out to cat and drives a browser subagent to exfiltrate code
+        system: Google Antigravity IDE
+        date: "2025-11"
+        status: approved  # author approved 2026-07-16
+        # PromptArmor page carries no machine-readable date; dated corroborating
+        # source for the ledger: simonwillison.net/2025/Nov/25/google-antigravity-exfiltrates-data/
+        url: https://www.promptarmor.com/resources/google-antigravity-exfiltrates-data
+
+      # ---------------------------------------------------------------
+      # Targeted L2/L3 batch (2026-07-16): the widened screen + first
+      # curated batch reached N=39 but only 3 L2/L3 (7.7% vs the >=1/3
+      # hypothesis). This batch specifically hunts inter-agent coupling
+      # (L2) and deficient-oversight (L3) failures. Author directed the
+      # targeted search + add. Verified fetchable this session. Coding will
+      # decide final layer via the protocol; these are candidates, not
+      # asserted L2/L3.
+      # --- L2: inter-agent / shared-state coupling ---
+      - id: morris_ii_worm_2024
+        title: Morris II self-replicating AI worm propagates a prompt
+          injection across GenAI email assistants (zero-click agent-to-agent)
+        system: GenAI email assistants (Gemini/GPT-4/LLaVA)
+        date: "2024-03"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://sites.google.com/view/compromptmized
+      - id: curxecute_cursor_mcp_2025
+        title: "CurXecute (CVE-2025-54135): prompt injection through one MCP
+          server rewrites the Cursor agent's config to execute attacker code"
+        system: Cursor IDE agent + MCP tool chain
+        date: "2025-07"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://www.catonetworks.com/blog/curxecute-rce/
+      - id: mcpoison_cursor_mcp_2025
+        title: "MCPoison (CVE-2025-54136): a shared-repo MCP config swap gives
+          persistent RCE across every Cursor agent that trusted it"
+        system: Cursor IDE agent + shared MCP config
+        date: "2025-07"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://research.checkpoint.com/2025/cursor-vulnerability-mcpoison/
+      - id: agent_session_smuggling_a2a_2025
+        title: Agent session smuggling - a malicious A2A agent injects hidden
+          instructions across an established inter-agent session
+        system: Agent2Agent protocol (Google ADK / Gemini)
+        date: "2025-10"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://unit42.paloaltonetworks.com/agent-session-smuggling-in-agent2agent-systems/
+      - id: agent_in_the_middle_a2a_2025
+        title: Agent-in-the-Middle - a rogue A2A agent card manipulates the
+          host agent's LLM routing to intercept all inter-agent tasks
+        system: Agent2Agent protocol host routing
+        date: "2025-04"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://www.levelblue.com/en-us/resources/blogs/spiderlabs-blog/agent-in-the-middle-abusing-agent-cards-in-the-agent-2-agent-protocol-to-win-all-the-tasks/
+      - id: aixbt_agent_transfer_2025
+        title: AiXBT autonomous crypto agent manipulated via feed injection
+          into autonomously signing a ~55 ETH transfer
+        system: AiXBT autonomous trading agent
+        date: "2025-03"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://crypto.news/aixbt-agent-hacked-losing-55eth-aixbt-token-drops-2025/
+      # --- L3: human oversight point existed but was deficient ---
+      - id: wiz_ghostapproval_2026
+        title: "GhostApproval: coding agents' human approval dialog conceals
+          the real action (SSH-key write), defeating informed review (6 tools)"
+        system: 6 production coding agents (Q, Claude Code, Cursor, ...)
+        date: "2026-07"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://www.wiz.io/blog/ghostapproval-a-trust-boundary-gap-in-ai-coding-assistants
+      - id: cursor_plan_mode_halt_2025
+        title: Cursor Plan Mode agent ignored an explicit real-time halt order
+          and ran pkill / rm -rf across two machines
+        system: Cursor agentic IDE (Plan Mode)
+        date: "2025-12"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://www.mintmcp.com/blog/cursor-plan-mode-destructive-operations
+      - id: antigravity_turbo_drive_wipe_2025
+        title: Google Antigravity agent in Turbo Mode auto-executed rmdir /s /q
+          and wiped an entire drive with no confirmation checkpoint
+        system: Google Antigravity IDE (Turbo Mode)
+        date: "2025-11"
+        status: approved  # targeted L2/L3 batch 2026-07-16
+        url: https://github.com/vectara/awesome-agent-failures/blob/main/docs/case-studies/google-antigravity-drive-deletion.md

@@ -1,0 +1,266 @@
+# CASE mechanism classes, transcribed from Table 3 (tab:mechanisms) of
+# ../paper/main.tex. This is the coding frame for Study 2 (tool capability
+# coding) and the scoring basis for Study 3 (Appendix A bands count
+# evidence-backed mechanism classes per layer).
+# Counts are fixed by the paper: L1=9, L2=8, L3=9, L4=10.
+
+layers:
+  L1:
+    name: Control theory (stable, bounded agents)
+    classes:
+      - id: closed_loop_guardrails
+        mechanism: Closed-loop guardrails
+        classical_construct: Feedback control law
+        implementation_pattern: >-
+          Guardrail verdicts re-enter planning as proceed / refuse / revise
+          signals
+        failure_prevented: Silent goal drift across steps
+      - id: receding_horizon_planning
+        mechanism: Receding-horizon planning
+        classical_construct: Model predictive control
+        implementation_pattern: >-
+          Plan N steps, execute one, re-observe, re-plan under the constraint
+          set
+        failure_prevented: Open-loop plan execution drift
+      - id: budget_caps
+        mechanism: Budget caps
+        classical_construct: Reachable-set bounding
+        implementation_pattern: >-
+          Token, cost, and wall-clock ceilings enforced at the gateway, not in
+          the prompt
+        failure_prevented: Runaway loops, unbounded cost
+      - id: iteration_limits_with_fallback
+        mechanism: Iteration limits with fallback
+        classical_construct: Finite-horizon Lyapunov condition
+        implementation_pattern: >-
+          If V(x) fails to decrease within N iterations, control transfers to
+          a fallback policy or human
+        failure_prevented: Oscillation and thrash
+      - id: anti_windup_context_management
+        mechanism: Anti-windup context management
+        classical_construct: Actuator saturation compensation
+        implementation_pattern: >-
+          Trim accumulated failed-attempt context on repeated refusals
+        failure_prevented: Retry storms, context poisoning
+      - id: gain_scheduled_guardrails
+        mechanism: Gain-scheduled guardrails
+        classical_construct: Gain scheduling
+        implementation_pattern: >-
+          Strictness scheduled by task risk class and input novelty
+        failure_prevented: Uniformly brittle or uniformly lax controls
+      - id: uncertainty_aware_observers
+        mechanism: Uncertainty-aware observers
+        classical_construct: State estimation (Kalman tradition)
+        implementation_pattern: >-
+          Fuse noisy eval signals into an estimate with confidence; widen
+          review at high variance
+        failure_prevented: Acting on a single noisy signal
+      - id: least_privilege_tool_access
+        mechanism: Least-privilege tool access
+        classical_construct: Action-space restriction (design-time variety attenuation)
+        implementation_pattern: >-
+          Scoped per-agent credentials validated per call at the tool gateway
+        failure_prevented: Injection-driven capability escalation
+      - id: agent_circuit_breakers
+        mechanism: Agent circuit breakers
+        classical_construct: Controllability, safe-state reachability
+        implementation_pattern: >-
+          Kill-and-quarantine on invariant violation detected in telemetry
+        failure_prevented: Compromised agent continues acting
+
+  L2:
+    name: Complex adaptive systems (ecosystem-level safety)
+    classes:
+      - id: registry_backed_interaction_graph
+        mechanism: Registry-backed interaction graph
+        classical_construct: Coupling structure of the swarm risk decomposition
+        implementation_pattern: >-
+          Workflows declare shared-state channels at onboarding; undeclared
+          edges block deployment
+        failure_prevented: Invisible coupling through shared state
+      - id: population_simulation
+        mechanism: Population simulation
+        classical_construct: Empirical estimation of branching factor k
+        implementation_pattern: >-
+          Staged replay of production traffic against the full declared graph
+        failure_prevented: Member-certified, collective-untested
+      - id: emergent_behavior_detection
+        mechanism: Emergent behavior detection
+        classical_construct: Attractor and regime-shift analysis
+        implementation_pattern: >-
+          Population metrics: output entropy, coordination indices,
+          shared-vocabulary drift
+        failure_prevented: Silent norm lock-in across the fleet
+      - id: contagion_controls
+        mechanism: Contagion controls
+        classical_construct: Percolation thresholds, graph partitioning
+        implementation_pattern: >-
+          Rate and budget isolation cells; inter-cell breakers placed by graph
+          analysis
+        failure_prevented: Supercritical cascade (k > 1)
+      - id: criticality_monitoring
+        mechanism: Criticality monitoring
+        classical_construct: Self-organized criticality
+        implementation_pattern: >-
+          Avalanche-size distribution of error propagation; heavy-tail
+          alerting
+        failure_prevented: Drift toward critical state under healthy averages
+      - id: shared_memory_governance
+        mechanism: Shared-memory governance
+        classical_construct: Stigmergy
+        implementation_pattern: >-
+          Provenance tags, time-to-live, and write permissions on shared
+          context media
+        failure_prevented: Artifact-mediated contamination
+      - id: population_red_teaming
+        mechanism: Population red teaming
+        classical_construct: Worst-case perturbation analysis
+        implementation_pattern: >-
+          Adversarial agents and poisoned shared state injected in simulation
+        failure_prevented: Designing to average-case interaction risk
+      - id: model_diversity_policy
+        mechanism: Model diversity policy
+        classical_construct: Diversity-stability principle (ecology)
+        implementation_pattern: >-
+          Heterogeneous base models or verified independent failure modes on
+          critical paths
+        failure_prevented: Monoculture cascade
+
+  L3:
+    name: Supervisory cybernetics (human-AI governance)
+    classes:
+      - id: tiered_autonomy
+        mechanism: Tiered autonomy
+        classical_construct: Variety attenuation (Ashby, Beer)
+        implementation_pattern: >-
+          Tier 0 autonomous absorption, tier 1 AI investigation, tier 2 human
+          decision, with handoff SLAs
+        failure_prevented: Oversight channel saturation
+      - id: behavioral_model_escalation
+        mechanism: Behavioral-model escalation
+        classical_construct: Good regulator theorem; variety amplification
+        implementation_pattern: >-
+          Escalation packets carry intent, deviation score, and proposed
+          remediation, linked to full provenance
+        failure_prevented: Variety deficit disguised as information overload
+      - id: algedonic_alerts
+        mechanism: Algedonic alerts
+        classical_construct: Beer's algedonic channel
+        implementation_pattern: >-
+          Severity-triggered signals bypass tiers directly to accountable
+          executives
+        failure_prevented: Bad news filtered through hierarchy
+      - id: approval_gates
+        mechanism: Approval gates
+        classical_construct: Consequence-weighted checkpoint placement
+        implementation_pattern: >-
+          Risk-scored action classes; synchronous approval only for
+          high-consequence classes
+        failure_prevented: Rubber-stamping or ungated action
+      - id: override_authority_kill_switches
+        mechanism: Override authority and kill switches
+        classical_construct: Requisite intervention capacity (Article 14 operationalized)
+        implementation_pattern: >-
+          Role-bound override rights; fleet and cell switches; quarterly
+          drills with timing records
+        failure_prevented: Ceremonial oversight
+      - id: rewind_compensating_rollback
+        mechanism: Rewind, compensating rollback
+        classical_construct: Controllability extended to consequence space
+        implementation_pattern: >-
+          Transactional and compensating-action patterns at the tool gateway
+        failure_prevented: Irreversibility as the default
+      - id: audit_trails_provenance
+        mechanism: Audit trails and provenance
+        classical_construct: Regulator's internal model requirement
+        implementation_pattern: >-
+          Signed decision chains linking intent, context, tool calls, and
+          outcomes
+        failure_prevented: Unexplainable escalation
+      - id: federated_supervision
+        mechanism: Federated supervision
+        classical_construct: Beer's recursion principle (VSM)
+        implementation_pattern: >-
+          Functional teams run the full oversight loop for owned agents
+          within enterprise envelopes
+        failure_prevented: Central oversight bottleneck
+      - id: oversight_meta_monitoring
+        mechanism: Oversight meta-monitoring
+        classical_construct: Second-order cybernetics
+        implementation_pattern: >-
+          Measure escalation SLA adherence, drill outcomes, and gate quality
+        failure_prevented: Ungoverned governor
+
+  L4:
+    name: Engineering operations (zero-touch operationalization)
+    classes:
+      - id: policy_as_code_gates
+        mechanism: Policy-as-code gates
+        classical_construct: Governance by construction
+        implementation_pattern: >-
+          Pipeline verifies observer coverage, declared interaction edges,
+          and tool scopes before admission
+        failure_prevented: Shadow agents, permission creep
+      - id: evals_in_cicd
+        mechanism: Evals in CI/CD
+        classical_construct: Observability certified pre-release
+        implementation_pattern: >-
+          Eval suites mapped to declared state space; coverage thresholds as
+          gate criteria
+        failure_prevented: Unobservable drift modes deployed
+      - id: progressive_rollout_atomic_rollback
+        mechanism: Progressive rollout with atomic rollback
+        classical_construct: Error-budget-aware exposure scheduling
+        implementation_pattern: >-
+          Canary cohorts; automatic reversion of code, prompts, and policies
+          as one unit
+        failure_prevented: Fleet-wide exposure to uncertified change
+      - id: per_agent_workload_identity
+        mechanism: Per-agent workload identity
+        classical_construct: Attribution precondition
+        implementation_pattern: >-
+          Cryptographic identity at deployment; no shared credentials;
+          identity-bound tool scopes
+        failure_prevented: Unattributable action, credential sprawl
+      - id: semantic_observability
+        mechanism: Semantic observability
+        classical_construct: Shared telemetry substrate
+        implementation_pattern: >-
+          Open-standard traces of reasoning, plans, tool calls, guardrail
+          verdicts, and cost
+        failure_prevented: Per-layer instrumentation silos
+      - id: chaos_fault_injection_drills
+        mechanism: Chaos and fault-injection drills
+        classical_construct: Chaos engineering
+        implementation_pattern: >-
+          Staged agent kills, poisoned tool responses; verify Layer 1 to 3
+          mechanisms fire
+        failure_prevented: Mechanisms that exist only on paper
+      - id: extended_golden_signals
+        mechanism: Extended golden signals
+        classical_construct: SRE golden signals
+        implementation_pattern: >-
+          Latency, traffic, errors, saturation, plus decision quality and
+          cost per decision
+        failure_prevented: Availability-only dashboards
+      - id: layer_coded_postmortems
+        mechanism: Layer-coded postmortems
+        classical_construct: Blameless postmortem practice
+        implementation_pattern: >-
+          Every incident coded to primary and secondary CASE layers; feeds
+          maturity scoring
+        failure_prevented: Unlearned incidents
+      - id: error_budget_modulated_autonomy
+        mechanism: Error-budget-modulated autonomy
+        classical_construct: Autonomy as controlled variable (Eq. 6 closed loop)
+        implementation_pattern: >-
+          Budget dashboard by violation class; autonomy expansion approved
+          against remaining budget
+        failure_prevented: Autonomy granted by memo
+      - id: toil_accounting
+        mechanism: Toil accounting
+        classical_construct: SRE toil budgets
+        implementation_pattern: >-
+          Manual oversight actions counted as toil; reduction targets fund
+          amplification (raise G)
+        failure_prevented: Permanent manual patchwork
