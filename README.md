@@ -31,11 +31,15 @@ src/
   collectors/   source collectors (AIID, MIT Risk Repo, arXiv, curated web) + screen + fetch + ledger
   coding/       Study 1 dual-coding: protocol.py (Appendix B rule base), llm_precoder, run_coding, adjudicate, kappa
   study2/       Study 2 tool-capability coder (code_tools.py)
-  study3/       Study 3 composite index (index.py: geometric-mean, Eq. 9)
+  study3/       Study 3 two-part maturity instrument (index.py, Sec. 6.2):
+                bottleneck score M = a*min(m) + (1-a)*mean(m) (Eq. 9) and
+                certification gate max{k: all m_l >= tau_k} (Eq. 10); the
+                geometric-mean composite is kept as the robustness limit
   emit/         LaTeX/JSON/figure emitters + build_study{1,2,3}_outputs orchestrators
   llm/          shared structured-output caller (SDK + stdlib HTTP fallback)
   run.py        Makefile entry points
-config/         mechanism_classes.yaml, coding_protocol.yaml, sources.yaml, tools.yaml
+config/         mechanism_classes.yaml, coding_protocol.yaml, sources.yaml,
+                tools.yaml, study3.yaml (bottleneck weight alpha, default 0.6)
 tests/          pytest suite (run before claiming any task done)
 notebooks/      adjudication_review.ipynb (the human-adjudication step of Study 1)
 ```

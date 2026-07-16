@@ -59,7 +59,7 @@ layers:
         mechanism: Least-privilege tool access
         classical_construct: Action-space restriction (design-time variety attenuation)
         implementation_pattern: >-
-          Scoped per-agent credentials validated per call at the tool gateway
+          Scoped per-agent credentials validated per call at the resource gateway
         failure_prevented: Injection-driven capability escalation
       - id: agent_circuit_breakers
         mechanism: Agent circuit breakers
@@ -168,7 +168,7 @@ layers:
         mechanism: Rewind, compensating rollback
         classical_construct: Controllability extended to consequence space
         implementation_pattern: >-
-          Transactional and compensating-action patterns at the tool gateway
+          Transactional and compensating-action patterns at the resource gateway
         failure_prevented: Irreversibility as the default
       - id: audit_trails_provenance
         mechanism: Audit trails and provenance

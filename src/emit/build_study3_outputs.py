@@ -17,10 +17,11 @@ from pathlib import Path
 
 from src.emit.figure1 import render_figure1
 from src.emit.stats_summary import study3_stats
-from src.study3.index import LAYERS, geometric_mean_index, maturity_level
+from src.study3.index import DEFAULT_ALPHA, LAYERS
 from src.ledger import upsert_ledger_entries
 
 ROOT = Path(__file__).resolve().parents[2]
+CONFIG_YAML = ROOT / "config" / "study3.yaml"
 PARTS_DIR = ROOT / "data" / "raw" / "study3"
 DEPLOYMENTS_CSV = ROOT / "data" / "study3_deployments.csv"
 FIGURE_PDF = ROOT / "results" / "figure1.pdf"
@@ -107,6 +108,15 @@ def _deployments_for_stats(rows: list[dict]) -> list[dict]:
              "scores": {l: r[f"m_{l}"] for l in LAYERS}} for r in rows]
 
 
+def _load_alpha() -> float:
+    """Bottleneck weight alpha from config/study3.yaml (default 0.6)."""
+    if CONFIG_YAML.exists():
+        import yaml
+        cfg = yaml.safe_load(CONFIG_YAML.read_text(encoding="utf-8")) or {}
+        return float(cfg.get("index", {}).get("alpha", DEFAULT_ALPHA))
+    return DEFAULT_ALPHA
+
+
 def main() -> int:
     rows = load_corpus()
     if len(rows) < MIN_N:
@@ -120,21 +130,32 @@ def main() -> int:
         print(f"wrote {DEPLOYMENTS_CSV.relative_to(ROOT)} ({len(rows)} rows)")
 
     deployments = _deployments_for_stats(rows)
-    render_figure1(deployments, FIGURE_PDF)
+    alpha = _load_alpha()
+    render_figure1(deployments, FIGURE_PDF, alpha=alpha)
     _write_ledger(rows)
 
     stats = json.loads(STATS_JSON.read_text(encoding="utf-8")) if STATS_JSON.exists() else {}
-    stats["study3"] = study3_stats(deployments)
+    stats["study3"] = study3_stats(deployments, alpha=alpha)
     STATS_JSON.write_text(
         json.dumps(stats, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
     s = stats["study3"]
+    idx = s["index"]
+    levels = idx["certified_level_distribution"]
     print(f"wrote {FIGURE_PDF.relative_to(ROOT)} and study3 stats")
     print(f"  N deployments        : {s['n_deployments']}")
     print(f"  per-layer mean       : "
           + ", ".join(f"{l} {s['per_layer_mean'][l]:.2f}" for l in LAYERS))
-    print(f"  share composite <= L1: {s['share_composite_le_L1']:.0%}")
+    print(f"  bottleneck (a={idx['alpha']}) : "
+          f"mean {idx['bottleneck_mean']:.3f}, "
+          f"median {idx['bottleneck_median']:.3f}, "
+          f"min {idx['bottleneck_min']:.3f}, max {idx['bottleneck_max']:.3f}")
+    print(f"  certified levels     : "
+          + ", ".join(f"{name.split()[0]} {count}"
+                      for name, count in levels.items()))
+    print(f"  geometric limit      : all composites zero = "
+          f"{idx['geometric_robustness_limit']['all_composites_zero']}")
     print(f"  modal weakest layer  : {s['modal_weakest_layer']}")
     return 0
 

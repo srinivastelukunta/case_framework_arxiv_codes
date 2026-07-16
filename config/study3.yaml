@@ -1,0 +1,7 @@
+# Study 3 maturity instrument parameters (paper v7, Sec. 6.2, Eqs. 9-10).
+index:
+  # Bottleneck weight in M_CASE = alpha*min(m) + (1-alpha)*mean(m).
+  alpha: 0.6
+  # Sensitivity analysis documented in the paper over this range; results
+  # (all 35 deployments certify L0) are unchanged across it.
+  alpha_sensitivity_range: [0.5, 0.75]

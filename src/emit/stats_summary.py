@@ -14,26 +14,35 @@ LAYERS = ("L1", "L2", "L3", "L4")
 VERDICTS = ("Full", "Partial", "None")
 
 
-def study3_stats(deployments: list[dict]) -> dict:
+def study3_stats(deployments: list[dict], alpha: float | None = None) -> dict:
     """Headline statistics for Study 3's maturity distribution.
 
-    deployments: [{"deployment", "scores": {L1..L4}}]. Composite is the
-    geometric-mean index; the paper cites the share at composite level L1 or
-    below (M_CASE < 0.4), the modal weakest layer, and per-layer means.
+    deployments: [{"deployment", "scores": {L1..L4}}]. The two-part
+    instrument (Sec. 6.2): bottleneck score M_CASE (Eq. 9) and certified
+    level via the tau-gate (Eq. 10); the geometric-mean composite is
+    reported only as the robustness limit. The paper also cites the modal
+    weakest layer and per-layer means.
     """
+    from statistics import median
+
     from src.study3.index import (
+        DEFAULT_ALPHA,
         LAYERS,
         LEVEL_NAMES,
+        bottleneck_index,
+        certified_level,
         geometric_mean_index,
-        maturity_level,
     )
 
+    if alpha is None:
+        alpha = DEFAULT_ALPHA
     n = len(deployments)
     if n == 0:
         raise ValueError("study3 stats: no deployments")
 
-    composites = [geometric_mean_index(d["scores"]) for d in deployments]
-    levels = [maturity_level(m) for m in composites]
+    scores = [bottleneck_index(d["scores"], alpha) for d in deployments]
+    levels = [certified_level(d["scores"]) for d in deployments]
+    geometric = [geometric_mean_index(d["scores"]) for d in deployments]
     level_counts = {name: 0 for name in LEVEL_NAMES}
     for lv in levels:
         level_counts[LEVEL_NAMES[lv]] += 1
@@ -51,21 +60,25 @@ def study3_stats(deployments: list[dict]) -> dict:
     per_layer_mean = {
         l: sum(d["scores"][l] for d in deployments) / n for l in LAYERS
     }
-    share_le_l1 = sum(1 for m in composites if m < 0.4) / n
-    # Arithmetic-mean composite for contrast: a compensatory average would
-    # scatter this population into "emerging" maturity, masking the fragility
-    # the non-compensatory geometric index exposes (paper N4, demonstrated).
-    arithmetic = [sum(d["scores"][l] for l in LAYERS) / 4 for d in deployments]
 
     return {
         "n_deployments": n,
         "per_layer_mean": per_layer_mean,
-        "composite_mean": sum(composites) / n,
-        "arithmetic_mean_composite": sum(arithmetic) / n,
-        "share_composite_le_L1": share_le_l1,
         "modal_weakest_layer": modal_weakest,
         "weakest_layer_frequency": weakest_freq,
-        "level_distribution": level_counts,
+        "index": {
+            "alpha": alpha,
+            "bottleneck_mean": sum(scores) / n,
+            "bottleneck_median": median(scores),
+            "bottleneck_min": min(scores),
+            "bottleneck_max": max(scores),
+            "scores": scores,
+            "certified_level_distribution": level_counts,
+            "geometric_robustness_limit": {
+                "all_composites_zero": all(g == 0.0 for g in geometric),
+                "composite_mean": sum(geometric) / n,
+            },
+        },
     }
 
 
