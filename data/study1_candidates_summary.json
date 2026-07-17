@@ -1,0 +1,25 @@
+{
+  "excluded_by_reason": {
+    "no_agent_terms": 2918,
+    "pre_2023": 906
+  },
+  "included_by_source": {
+    "aiid": 162,
+    "arxiv": 9,
+    "mit_risk_repo": 160,
+    "web_reports": 33
+  },
+  "screen_included_total": 364,
+  "screened_by_source": {
+    "aiid": 1571,
+    "arxiv": 10,
+    "mit_risk_repo": 2574,
+    "web_reports": 33
+  },
+  "screened_total": 4188,
+  "url_duplicates_dropped": {},
+  "web_fetch_failures": [
+    "replit_db_deletion_2025: RobotsDisallowed: robots.txt disallows https://www.theregister.com/2025/07/21/replit_saastr_vibe_coding_incident/",
+    "freysa_agent_transfer_2024: HTTPError: 403 Client Error: Forbidden for url: https://www.theblock.co/post/328747/human-player-outwits-freysa-ai-agent-in-47000-crypto-challenge"
+  ]
+}
